@@ -1,4 +1,4 @@
-<?php namespace Limoncello\Flute\Contracts\Validation;
+<?php namespace Limoncello\Flute\Resources\Messages\En;
 
 /**
  * Copyright 2015-2017 info@neomerx.com
@@ -16,34 +16,23 @@
  * limitations under the License.
  */
 
-use Limoncello\Flute\Validation\ErrorCollection;
+use Limoncello\Contracts\L10n\MessageStorageInterface;
+use Limoncello\Flute\L10n\Messages;
 
 /**
  * @package Limoncello\Flute
  */
-interface ValidatorInterface
+class Generic implements MessageStorageInterface
 {
     /**
-     * @param array $jsonData
-     *
-     * @return bool
+     * @inheritdoc
      */
-    public function check(array $jsonData): bool;
-
-    /**
-     * @param array $jsonData
-     *
-     * @return self
-     */
-    public function assert(array $jsonData): self;
-
-    /**
-     * @return array
-     */
-    public function getCaptures(): array;
-
-    /**
-     * @return ErrorCollection
-     */
-    public function getErrors(): ErrorCollection;
+    public static function getMessages(): array
+    {
+        return [
+            Messages::MSG_ERR_INVALID_ELEMENT   => 'Invalid element.',
+            Messages::MSG_ERR_INVALID_PARAMETER => 'Invalid parameter.',
+            Messages::MSG_ERR_INVALID_OPERATION => 'Invalid operation.',
+        ];
+    }
 }

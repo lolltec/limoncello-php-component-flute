@@ -1,4 +1,4 @@
-<?php namespace Limoncello\Flute\I18n;
+<?php
 
 /**
  * Copyright 2015-2017 info@neomerx.com
@@ -16,18 +16,6 @@
  * limitations under the License.
  */
 
-use Limoncello\Flute\Contracts\I18n\TranslatorInterface;
+use Limoncello\Flute\Resources\Messages\En\Validation;
 
-/**
- * @package Limoncello\Flute
- */
-class Translator implements TranslatorInterface
-{
-    /**
-     * @inheritdoc
-     */
-    public function get(string $messageId): string
-    {
-        return $messageId;
-    }
-}
+return Validation::getMessages();

@@ -1,4 +1,4 @@
-<?php namespace Limoncello\Tests\Flute\Data\Models;
+<?php namespace Limoncello\Flute\Contracts\Validation;
 
 /**
  * Copyright 2015-2017 info@neomerx.com
@@ -16,33 +16,15 @@
  * limitations under the License.
  */
 
+use Psr\Container\ContainerInterface;
+
 /**
- * @package Limoncello\Tests\Flute
+ * @package Limoncello\Flute
  */
-interface ModelInterface
+interface ContextInterface extends \Limoncello\Validation\Contracts\Execution\ContextInterface
 {
     /**
-     * @return string
+     * @return ContainerInterface
      */
-    public static function getTableName();
-
-    /**
-     * @return string
-     */
-    public static function getPrimaryKeyName();
-
-    /**
-     * @return array
-     */
-    public static function getAttributeTypes();
-
-    /**
-     * @return array
-     */
-    public static function getAttributeLengths();
-
-    /**
-     * @return array
-     */
-    public static function getRelationships();
+    public function getContainer(): ContainerInterface;
 }

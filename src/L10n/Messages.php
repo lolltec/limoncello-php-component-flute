@@ -1,4 +1,4 @@
-<?php namespace Limoncello\Flute\Contracts\I18n;
+<?php namespace Limoncello\Flute\L10n;
 
 /**
  * Copyright 2015-2017 info@neomerx.com
@@ -19,30 +19,19 @@
 /**
  * @package Limoncello\Flute
  */
-interface TranslatorInterface
+interface Messages
 {
-    /** Message id */
-    const MSG_ERR_INVALID_ELEMENT = 'Invalid element.';
-
-    /** Message id */
-    const MSG_ERR_CANNOT_BE_EMPTY = 'Value can not be empty.';
-
-    /** Message id */
-    const MSG_ERR_UNKNOWN_MODEL_CLASS = 'Unknown model class.';
-
-    /** Message id */
-    const MSG_ERR_QUERY_IS_NOT_CONFIGURED = 'Builder query is not configured.';
-
-    /** Message id */
-    const MSG_ERR_INVALID_PARAMETER = 'Invalid parameter.';
-
-    /** Message id */
-    const MSG_ERR_INVALID_OPERATION = 'Invalid operation.';
-
     /**
-     * @param string $messageId
-     *
-     * @return string
+     * Namespace for string resources.
      */
-    public function get(string $messageId): string;
+    const RESOURCES_NAMESPACE = 'Limoncello.Flute';
+
+    /** Message id */
+    const MSG_ERR_INVALID_ELEMENT = 0;
+
+    /** Message id */
+    const MSG_ERR_INVALID_PARAMETER = self::MSG_ERR_INVALID_ELEMENT + 1;
+
+    /** Message id */
+    const MSG_ERR_INVALID_OPERATION = self::MSG_ERR_INVALID_PARAMETER + 1;
 }
