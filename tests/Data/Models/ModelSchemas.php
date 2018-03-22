@@ -18,13 +18,13 @@
 
 use Doctrine\DBAL\Types\Type;
 use InvalidArgumentException;
-use Limoncello\Contracts\Data\ModelSchemeInfoInterface;
+use Limoncello\Contracts\Data\ModelSchemaInfoInterface;
 use Limoncello\Contracts\Data\RelationshipTypes;
 
 /**
  * @package Limoncello\Flute
  */
-class ModelSchemes implements ModelSchemeInfoInterface
+class ModelSchemas implements ModelSchemaInfoInterface
 {
     /**
      * @inheritdoc
@@ -135,7 +135,7 @@ class ModelSchemes implements ModelSchemeInfoInterface
         string $primaryKey,
         array $attributeTypes,
         array $attributeLengths
-    ): ModelSchemeInfoInterface {
+    ): ModelSchemaInfoInterface {
         if (empty($class) === true) {
             throw new InvalidArgumentException('class');
         }
@@ -353,7 +353,7 @@ class ModelSchemes implements ModelSchemeInfoInterface
         string $foreignKey,
         string $reverseClass,
         string $reverseName
-    ): ModelSchemeInfoInterface {
+    ): ModelSchemaInfoInterface {
         $this->registerRelationshipType(RelationshipTypes::BELONGS_TO, $class, $name);
         $this->registerRelationshipType(RelationshipTypes::HAS_MANY, $reverseClass, $reverseName);
 
@@ -376,7 +376,7 @@ class ModelSchemes implements ModelSchemeInfoInterface
         string $reverseForeignKey,
         string $reverseClass,
         string $reverseName
-    ): ModelSchemeInfoInterface {
+    ): ModelSchemaInfoInterface {
         $this->registerRelationshipType(RelationshipTypes::BELONGS_TO_MANY, $class, $name);
         $this->registerRelationshipType(RelationshipTypes::BELONGS_TO_MANY, $reverseClass, $reverseName);
 
