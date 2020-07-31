@@ -66,6 +66,7 @@ use Limoncello\Tests\Flute\Data\Schemas\UserSchema;
 use Limoncello\Tests\Flute\TestCase;
 use Mockery;
 use Mockery\Mock;
+use Neomerx\JsonApi\Contracts\Http\Query\BaseQueryParserInterface;
 use Neomerx\JsonApi\Contracts\Schema\DocumentInterface;
 use Neomerx\JsonApi\Exceptions\JsonApiException;
 use Psr\Container\ContainerExceptionInterface;
@@ -143,7 +144,16 @@ class ControllerTest extends TestCase
         $body    = (string)($response->getBody());
         $decoded = json_decode($body, true);
 
-        $this->assertEquals(self::DEFAULT_JSON_META, $decoded[DocumentInterface::KEYWORD_META]);
+        $expectedMeta = [
+            'total_pages'    => 2,
+            'current_page'   => 1,
+            'items_per_page' => 10,
+            'total_items'    => 20,
+            'items_offset'   => 0,
+        ];
+
+//        $this->assertEquals(self::DEFAULT_JSON_META, $decoded[DocumentInterface::KEYWORD_META]);
+        $this->assertEquals($expectedMeta, $decoded[DocumentInterface::KEYWORD_META]);
         $this->assertEquals(
             'http://localhost.local/comments?sort=-id&page[offset]=10&page[limit]=10',
             urldecode($decoded[DocumentInterface::KEYWORD_LINKS][DocumentInterface::KEYWORD_NEXT])
@@ -223,6 +233,215 @@ class ControllerTest extends TestCase
             $resource[DocumentInterface::KEYWORD_INCLUDED][0]
                 [DocumentInterface::KEYWORD_ATTRIBUTES][UserSchema::D_ATTR_FULL_NAME]
         ));
+    }
+
+    /**
+     * Controller test.
+     *
+     * @throws Exception
+     * @throws DBALException
+     */
+    public function testIndexWithParameters1(): void
+    {
+        $routeParams = [];
+        $queryParams = [
+            'page' => [
+                'limit' => 2,
+            ],
+        ];
+        $container   = $this->createContainer();
+        $uri         = new Uri('http://localhost.local/boards?' . http_build_query($queryParams));
+        /** @var Mock $request */
+        $request = Mockery::mock(ServerRequestInterface::class);
+        $request->shouldReceive('getQueryParams')->once()->withNoArgs()->andReturn($queryParams);
+        $request->shouldReceive('getUri')->once()->withNoArgs()->andReturn($uri);
+
+        $exception = null;
+        try {
+            /** @var ServerRequestInterface $request */
+            $response = ApiBoardsController::index($routeParams, $container, $request);
+            $this->assertNotNull($response);
+            $this->assertEquals(200, $response->getStatusCode());
+
+            $body     = (string)($response->getBody());
+            $resource = json_decode($body, true);
+
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_META, $resource);
+            $this->assertArrayHasKey('total_pages', $meta = $resource[DocumentInterface::KEYWORD_META]);
+            $this->assertArrayHasKey('current_page', $meta);
+            $this->assertArrayHasKey('items_per_page', $meta);
+            $this->assertArrayHasKey('total_items', $meta);
+            $this->assertArrayHasKey('items_offset', $meta);
+            $this->assertEquals(1, $meta['current_page']);
+            $this->assertEquals(3, $meta['total_pages']);
+            $this->assertEquals(2, $meta['items_per_page']);
+            $this->assertEquals(0, $meta['items_offset']);
+            $this->assertEquals(5, $meta['total_items']);
+
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_LINKS, $resource);
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_DATA, $resource);
+
+        } catch (JsonApiException $exception) {
+        }
+
+        $this->assertNull($exception);
+    }
+
+    /**
+     * Controller test.
+     *
+     * @throws Exception
+     * @throws DBALException
+     */
+    public function testIndexWithParameters2(): void
+    {
+        $routeParams = [];
+        $queryParams = [
+            'page' => [
+                'limit' => 2,
+                'offset' => 5,
+            ],
+        ];
+        $container   = $this->createContainer();
+        $uri         = new Uri('http://localhost.local/boards?' . http_build_query($queryParams));
+        /** @var Mock $request */
+        $request = Mockery::mock(ServerRequestInterface::class);
+        $request->shouldReceive('getQueryParams')->once()->withNoArgs()->andReturn($queryParams);
+        $request->shouldReceive('getUri')->once()->withNoArgs()->andReturn($uri);
+
+        $exception = null;
+        try {
+            /** @var ServerRequestInterface $request */
+            $response = ApiBoardsController::index($routeParams, $container, $request);
+            $this->assertNotNull($response);
+            $this->assertEquals(200, $response->getStatusCode());
+
+            $body     = (string)($response->getBody());
+            $resource = json_decode($body, true);
+
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_META, $resource);
+            $this->assertArrayNotHasKey('total_pages', $meta = $resource[DocumentInterface::KEYWORD_META]);
+            $this->assertArrayNotHasKey('current_page', $meta);
+            $this->assertArrayNotHasKey('items_per_page', $meta);
+            $this->assertArrayNotHasKey('total_items', $meta);
+            $this->assertArrayNotHasKey('items_offset', $meta);
+
+            $this->assertArrayNotHasKey(DocumentInterface::KEYWORD_LINKS, $resource);
+
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_DATA, $resource);
+
+        } catch (JsonApiException $exception) {
+        }
+
+        $this->assertNull($exception);
+    }
+
+    /**
+     * Controller test.
+     *
+     * @throws Exception
+     * @throws DBALException
+     */
+    public function testIndexWithParameters3(): void
+    {
+        $routeParams = [];
+        $queryParams = [
+            'page' => [
+                'limit' => 2
+            ],
+            'filter' => [
+                BoardSchema::RESOURCE_ID => [
+                    'in' => '105,205',
+                ]
+            ],
+        ];
+        $container   = $this->createContainer();
+        $uri         = new Uri('http://localhost.local/boards?' . http_build_query($queryParams));
+        /** @var Mock $request */
+        $request = Mockery::mock(ServerRequestInterface::class);
+        $request->shouldReceive('getQueryParams')->once()->withNoArgs()->andReturn($queryParams);
+        $request->shouldReceive('getUri')->once()->withNoArgs()->andReturn($uri);
+
+        $exception = null;
+        try {
+            /** @var ServerRequestInterface $request */
+            $response = ApiBoardsController::index($routeParams, $container, $request);
+            $this->assertNotNull($response);
+            $this->assertEquals(200, $response->getStatusCode());
+
+            $body     = (string)($response->getBody());
+            $resource = json_decode($body, true);
+
+            $this->assertEquals(self::DEFAULT_JSON_META, $resource[DocumentInterface::KEYWORD_META]);
+
+            $this->assertArrayNotHasKey(DocumentInterface::KEYWORD_LINKS, $resource);
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_DATA, $resource);
+            $this->assertCount(0, $resource[DocumentInterface::KEYWORD_DATA]);
+
+        } catch (JsonApiException $exception) {
+        }
+
+        $this->assertNull($exception);
+    }
+
+    /**
+     * Controller test.
+     *
+     * @throws Exception
+     * @throws DBALException
+     */
+    public function testIndexWithParameters4(): void
+    {
+        $routeParams = [];
+        $queryParams = [
+            'page' => [
+                'limit' => 2,
+                'offset' => 2,
+            ],
+            'filter' => [
+                BoardSchema::RESOURCE_ID => [
+                    'in' => '1,2,4',
+                ]
+            ],
+        ];
+        $container   = $this->createContainer();
+        $uri         = new Uri('http://localhost.local/boards?' . http_build_query($queryParams));
+        /** @var Mock $request */
+        $request = Mockery::mock(ServerRequestInterface::class);
+        $request->shouldReceive('getQueryParams')->once()->withNoArgs()->andReturn($queryParams);
+        $request->shouldReceive('getUri')->once()->withNoArgs()->andReturn($uri);
+
+        $exception = null;
+        try {
+            /** @var ServerRequestInterface $request */
+            $response = ApiBoardsController::index($routeParams, $container, $request);
+            $this->assertNotNull($response);
+            $this->assertEquals(200, $response->getStatusCode());
+
+            $body     = (string)($response->getBody());
+            $resource = json_decode($body, true);
+
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_META, $resource);
+            $this->assertArrayHasKey('total_pages', $meta = $resource[DocumentInterface::KEYWORD_META]);
+            $this->assertArrayHasKey('current_page', $meta);
+            $this->assertArrayHasKey('items_per_page', $meta);
+            $this->assertArrayHasKey('items_offset', $meta);
+            $this->assertArrayHasKey('total_items', $meta);
+            $this->assertEquals(2, $meta['current_page']);
+            $this->assertEquals(2, $meta['total_pages']);
+            $this->assertEquals(2, $meta['items_per_page']);
+            $this->assertEquals(2, $meta['items_offset']);
+            $this->assertEquals(3, $meta['total_items']);
+
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_LINKS, $resource);
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_DATA, $resource);
+
+            $this->assertCount(1, $resource[DocumentInterface::KEYWORD_DATA]);
+
+        } catch (JsonApiException $exception) {
+        }
+
+        $this->assertNull($exception);
     }
 
     /**
@@ -749,6 +968,7 @@ EOT;
         {
             "data" : {
                 "type"  : "comments",
+                "id" : "$index",
                 "attributes" : {
                     "text-attribute" : "$text"
                 },

@@ -84,9 +84,11 @@ trait DefaultControllerMethodsTrait
     ): ResponseInterface {
         $queryParser->parse(null, $queryParams);
 
-        $models = $mapper->applyQueryParameters($queryParser, $crud)->index();
+        $models      = $mapper->applyQueryParameters($queryParser, $crud)->index();
+        $modelsCount = $mapper->applyQueryParameters($queryParser, $crud)->withoutPaging()->count();
 
         static::defaultApplyIncludesAndFieldSetsToEncoder($queryParser, $encoder);
+        static::defaultApplyPagingMetaToEncoder($encoder, $models, $modelsCount);
         $responses = static::defaultCreateResponses($requestUri, $encoder);
         $response  = ($models->getData()) === null ?
             $responses->getCodeResponse(404) : $responses->getContentResponse($models);
@@ -713,6 +715,8 @@ trait DefaultControllerMethodsTrait
     }
 
     /**
+     * Paging offset = (Paging limit * Current page) - Paging limit;
+     *
      * @param ContainerInterface $container
      * @param string             $schemaClass
      *
@@ -753,6 +757,46 @@ trait DefaultControllerMethodsTrait
         }
         if ($queryParser->hasFields() === true) {
             $encoder->withFieldSets($queryParser->getFields());
+        }
+    }
+
+    /**
+     * @param EncoderInterface       $encoder
+     * @param PaginatedDataInterface $models
+     * @param int                    $modelsCount
+     */
+    protected static function defaultApplyPagingMetaToEncoder(
+        EncoderInterface $encoder,
+        PaginatedDataInterface $models,
+        int $modelsCount
+    ): void
+    {
+        assert($models !== null && $modelsCount !== null && $modelsCount >= 0);
+
+        if ($models->isCollection() === true &&
+            empty($models->getData()) === false &&
+            (0 <= $models->getOffset() || $models->hasMoreItems() === true)
+        ) {
+            $pagingMeta = [];
+
+            $pagingLimit  = $models->getLimit();
+            $pagingOffset = $models->getOffset();
+
+            $totalPages = ceil($modelsCount / $pagingLimit);
+            /**
+             * $pagingOffset = ($pagingLimit * $currentPage) - $pagingLimit;
+             */
+            $currentPage = floor(($pagingOffset + $pagingLimit) / $pagingLimit);
+
+            $pagingMeta = [
+                'total_pages'    => $totalPages,
+                'current_page'   => $currentPage,
+                'total_items'    => $modelsCount,
+                'items_per_page' => $pagingLimit,
+                'items_offset'   => $pagingOffset
+            ];
+
+            $encoder->withMeta($pagingMeta);
         }
     }
 

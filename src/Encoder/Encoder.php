@@ -104,7 +104,8 @@ class Encoder extends \Neomerx\JsonApi\Encoder\Encoder implements EncoderInterfa
     private function addPagingLinksIfNeeded(PaginatedDataInterface $data): void
     {
         if ($data->isCollection() === true &&
-            (0 < $data->getOffset() || $data->hasMoreItems() === true) &&
+            empty($data->getData()) === false &&
+            (0 <= $data->getOffset() || $data->hasMoreItems() === true) &&
             $this->getOriginalUri() !== null
         ) {
             $links       = [];

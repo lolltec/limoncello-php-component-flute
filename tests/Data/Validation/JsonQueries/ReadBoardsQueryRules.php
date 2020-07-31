@@ -42,7 +42,10 @@ class ReadBoardsQueryRules implements JsonApiQueryRulesInterface
      */
     public static function getFilterRules(): ?array
     {
-        return [];
+        return [
+            Schema::RESOURCE_ID => self::getIdentityRule(),
+            Schema::ATTR_TITLE => v::isString(),
+        ];
     }
 
     /**
