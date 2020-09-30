@@ -544,7 +544,9 @@ class Crud implements CrudInterface
             $builder->addRelationshipFiltersAndSorts(
                 $relationshipName,
                 $filtersAndSorts[self::REL_FILTERS_AND_SORTS__FILTERS] ?? [],
-                $filtersAndSorts[self::REL_FILTERS_AND_SORTS__SORTS] ?? []
+                $filtersAndSorts[self::REL_FILTERS_AND_SORTS__SORTS] ?? [],
+                $this->areFiltersWithAnd() === true ? ModelQueryBuilder::AND : ModelQueryBuilder::OR,
+                $this->areFiltersWithAnd() === true ? ModelQueryBuilder::AND : ModelQueryBuilder::OR
             );
 
             if ($distinctApplied === false) {

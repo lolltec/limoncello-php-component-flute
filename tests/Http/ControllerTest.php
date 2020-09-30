@@ -450,6 +450,75 @@ class ControllerTest extends TestCase
      * @throws Exception
      * @throws DBALException
      */
+    public function testIndexWithParameters5(): void
+    {
+        $routeParams = [];
+        $queryParams = [
+            'page' => [
+                'limit' => 2,
+                'offset' => 2,
+            ],
+            'filter' => [
+                'or' => [
+                    BoardSchema::RESOURCE_ID => [
+                        'in' => '1,2,3,4,5',
+                    ],
+                    PostSchema::RESOURCE_ID   => [
+                        'in' => '1,2,3,4,5,6,7,8'
+                    ],
+                ]
+            ],
+            'include' => 'posts-relationship',
+        ];
+        $container   = $this->createContainer();
+        $uri         = new Uri('http://localhost.local/boards?' . http_build_query($queryParams));
+        /** @var Mock $request */
+        $request = Mockery::mock(ServerRequestInterface::class);
+        $request->shouldReceive('getQueryParams')->once()->withNoArgs()->andReturn($queryParams);
+        $request->shouldReceive('getUri')->once()->withNoArgs()->andReturn($uri);
+
+        $exception = null;
+        try {
+            /** @var ServerRequestInterface $request */
+            $response = ApiBoardsController::index($routeParams, $container, $request);
+            $this->assertNotNull($response);
+            $this->assertEquals(200, $response->getStatusCode());
+
+            $body     = (string)($response->getBody());
+            $resource = json_decode($body, true);
+
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_META, $resource);
+            $this->assertArrayHasKey('total_pages', $meta = $resource[DocumentInterface::KEYWORD_META]);
+            $this->assertArrayHasKey('current_page', $meta);
+            $this->assertArrayHasKey('items_per_page', $meta);
+            $this->assertArrayHasKey('items_offset', $meta);
+            $this->assertArrayHasKey('total_items', $meta);
+            $this->assertEquals(2, $meta['current_page']);
+            $this->assertEquals(3, $meta['total_pages']);
+            $this->assertEquals(2, $meta['items_per_page']);
+            $this->assertEquals(2, $meta['items_offset']);
+            $this->assertEquals(5, $meta['total_items']);
+
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_LINKS, $resource);
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_DATA, $resource);
+
+            $this->assertCount(2, $resource[DocumentInterface::KEYWORD_DATA]);
+
+            $this->assertEquals(3, $data = $resource[DocumentInterface::KEYWORD_DATA][0]['id']);
+            $this->assertEquals(9, count($resource[DocumentInterface::KEYWORD_INCLUDED]));
+
+        } catch (JsonApiException $exception) {
+        }
+
+        $this->assertNull($exception);
+    }
+
+    /**
+     * Controller test.
+     *
+     * @throws Exception
+     * @throws DBALException
+     */
     public function testIndexWithParametersJoinedByOR(): void
     {
         $routeParams = [];
