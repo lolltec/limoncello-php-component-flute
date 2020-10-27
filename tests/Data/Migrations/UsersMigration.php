@@ -39,6 +39,7 @@ class UsersMigration extends Migration
         $this->createTable(Model::TABLE_NAME, [
             $this->primaryInt(Model::FIELD_ID),
             $this->relationship(Model::REL_ROLE),
+            $this->string(Model::FIELD_ALIAS),
             $this->string(Model::FIELD_TITLE),
             $this->string(Model::FIELD_FIRST_NAME),
             $this->string(Model::FIELD_LAST_NAME),

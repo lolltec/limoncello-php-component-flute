@@ -43,6 +43,7 @@ class ReadUsersQueryRules implements JsonApiQueryRulesInterface
     public static function getFilterRules(): ?array
     {
         return [
+            Schema::ATTR_ALIAS   => v::isString(),
             Schema::REL_POSTS    => v::stringToInt(v::moreThan(0)),
             Schema::REL_COMMENTS => v::stringToInt(v::moreThan(0)),
         ];

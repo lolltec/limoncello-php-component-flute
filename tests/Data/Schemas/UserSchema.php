@@ -32,6 +32,9 @@ class UserSchema extends BaseSchema
     const MODEL = Model::class;
 
     /** Attribute name */
+    const ATTR_ALIAS = 'alias-attribute';
+
+    /** Attribute name */
     const ATTR_TITLE = 'title-attribute';
 
     /** Attribute name */
@@ -69,6 +72,7 @@ class UserSchema extends BaseSchema
         return [
             self::SCHEMA_ATTRIBUTES => [
                 self::RESOURCE_ID      => Model::FIELD_ID,
+                self::ATTR_ALIAS       => Model::FIELD_ALIAS,
                 self::ATTR_TITLE       => Model::FIELD_TITLE,
                 self::ATTR_FIRST_NAME  => Model::FIELD_FIRST_NAME,
                 self::ATTR_LAST_NAME   => Model::FIELD_LAST_NAME,

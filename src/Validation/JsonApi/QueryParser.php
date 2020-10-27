@@ -1048,11 +1048,24 @@ class QueryParser implements JsonApiQueryParserInterface
             if ($arguments === '') {
                 yield $operationName => [];
             } else {
-                yield $operationName => $this->splitCommaSeparatedStringAndCheckNoEmpties(
-                    $parameterName,
-                    $arguments,
-                    $this->getInvalidParamMessage()
-                );
+                switch ($operationName) {
+                    case '=':
+                    case 'eq':
+                    case 'equals':
+                    case '!=':
+                    case 'neq':
+                    case 'not-equals':
+                    case 'like':
+                    case 'not-like':
+                        yield $operationName => [$arguments];
+                        break;
+                    default:
+                        yield $operationName => $this->splitCommaSeparatedStringAndCheckNoEmpties(
+                            $parameterName,
+                            $arguments,
+                            $this->getInvalidParamMessage()
+                        );
+                }
             }
         }
     }

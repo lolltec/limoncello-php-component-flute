@@ -50,6 +50,9 @@ class User extends Model
     const FIELD_ID_ROLE = 'id_role_fk';
 
     /** Field name */
+    const FIELD_ALIAS = 'alias';
+
+    /** Field name */
     const FIELD_TITLE = 'title';
 
     /** Field name */
@@ -84,6 +87,7 @@ class User extends Model
         return [
             self::FIELD_ID            => Type::INTEGER,
             self::FIELD_ID_ROLE       => Type::INTEGER,
+            self::FIELD_ALIAS         => Type::STRING,
             self::FIELD_TITLE         => Type::STRING,
             self::FIELD_FIRST_NAME    => Type::STRING,
             self::FIELD_LAST_NAME     => Type::STRING,
@@ -104,6 +108,7 @@ class User extends Model
     public static function getAttributeLengths(): array
     {
         return [
+            self::FIELD_ALIAS         => 255,
             self::FIELD_TITLE         => 255,
             self::FIELD_FIRST_NAME    => 255,
             self::FIELD_LAST_NAME     => 255,

@@ -72,6 +72,7 @@ class Runner
         $this->seedTable($connection, 5, User::TABLE_NAME, function () use ($faker, $allRoles) {
             return [
                 User::FIELD_ID_ROLE       => $faker->randomElement($allRoles)[Role::FIELD_ID],
+                User::FIELD_ALIAS         => $faker->regexify('[a-ZA-Z]{15}[#$%^&*()+=-[]\';,./{}|:<>?~]{1}[A-Z]{10}[#$%^&*()+=-[]\';,./{}|:<>?~]{1}[a-zA-Z]{10}'),
                 User::FIELD_TITLE         => $faker->title,
                 User::FIELD_FIRST_NAME    => $faker->firstName,
                 User::FIELD_LAST_NAME     => $faker->lastName,

@@ -561,6 +561,88 @@ class CrudTest extends TestCase
      * @throws Exception
      * @throws DBALException
      */
+    public function testIndexAttributeFilterWithSpecialCharactersValue(): void
+    {
+        $crud = $this->createCrud(UsersApi::class);
+
+        $filters        = [
+            User::FIELD_ALIAS   => [
+                FilterParameterInterface::OPERATION_LIKE => ['%&%'],
+            ],
+        ];
+
+        $data = $crud
+            ->withFilters($filters)
+            ->combineWithAnd()
+            ->index();
+
+        $this->assertNotEmpty($data->getData());
+        $this->assertCount(3, $data->getData());
+        $this->assertTrue(($firstUser = $data->getData()[0]) instanceof User);
+        $this->assertEquals(1, $firstUser->{User::FIELD_ID});
+    }
+
+    /**
+     * Test index.
+     *
+     * @throws Exception
+     * @throws DBALException
+     */
+    public function testIndexAttributeFilterWithSpecialCharactersValue1(): void
+    {
+        $crud = $this->createCrud(UsersApi::class);
+
+        $filters        = [
+            User::FIELD_ALIAS   => [
+                FilterParameterInterface::OPERATION_LIKE => ['%,%'],
+            ],
+        ];
+
+        $data = $crud
+            ->withFilters($filters)
+            ->combineWithAnd()
+            ->index();
+
+        $this->assertNotEmpty($data->getData());
+        $this->assertCount(5, $data->getData());
+        $this->assertTrue(($firstUser = $data->getData()[0]) instanceof User);
+        $this->assertEquals(1, $firstUser->{User::FIELD_ID});
+    }
+
+    /**
+     * Test index.
+     *
+     * @throws Exception
+     * @throws DBALException
+     */
+    public function testIndexAttributeFilterWithSpecialCharactersValue2(): void
+    {
+        $crud = $this->createCrud(UsersApi::class);
+
+        $filters        = [
+            User::FIELD_ALIAS   => [
+                FilterParameterInterface::OPERATION_EQUALS => ['^SaS_B_U^P_R^D`IaI_X_Y_R`KaC`S)\';,^/{}|:<~]EAWGAAVUIW&\';,`/{}|:<>~]jZweIaDCDV'],
+            ],
+        ];
+
+        $data = $crud
+            ->withFilters($filters)
+            ->combineWithAnd()
+            ->index();
+
+        $this->assertNotEmpty($data->getData());
+        $this->assertCount(1, $data->getData());
+        $this->assertTrue(($firstUser = $data->getData()[0]) instanceof User);
+        $this->assertEquals(3, $firstUser->{User::FIELD_ID});
+    }
+
+
+    /**
+     * Test index.
+     *
+     * @throws Exception
+     * @throws DBALException
+     */
     public function testIndexWithoutPaging(): void
     {
         $crud = $this->createCrud(PostsApi::class);

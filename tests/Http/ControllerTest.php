@@ -519,6 +519,139 @@ class ControllerTest extends TestCase
      * @throws Exception
      * @throws DBALException
      */
+    public function testIndexAttributeFilterWithSpecialCharactersValue(): void
+    {
+        $routeParams = [];
+        $queryParams = [
+            'filter' => [
+                UserSchema::ATTR_ALIAS => [
+                    'like' => '%&%',
+                ],
+            ],
+        ];
+        $container   = $this->createContainer();
+        $uri         = new Uri('http://localhost.local/users?' . http_build_query($queryParams));
+        /** @var Mock $request */
+        $request = Mockery::mock(ServerRequestInterface::class);
+        $request->shouldReceive('getQueryParams')->once()->withNoArgs()->andReturn($queryParams);
+        $request->shouldReceive('getUri')->once()->withNoArgs()->andReturn($uri);
+
+        $exception = null;
+        try {
+            /** @var ServerRequestInterface $request */
+            $response = ApiUsersController::index($routeParams, $container, $request);
+            $this->assertNotNull($response);
+            $this->assertEquals(200, $response->getStatusCode());
+
+            $body     = (string)($response->getBody());
+            $resource = json_decode($body, true);
+
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_DATA, $resource);
+
+            $this->assertCount(5, $resource[DocumentInterface::KEYWORD_DATA]);
+
+            $this->assertEquals(1, $data = $resource[DocumentInterface::KEYWORD_DATA][0]['id']);
+        } catch (JsonApiException $exception) {
+        }
+
+        $this->assertNull($exception);
+    }
+
+    /**
+     * Controller test.
+     *
+     * @throws Exception
+     * @throws DBALException
+     */
+    public function testIndexAttributeFilterWithSpecialCharactersValue1(): void
+    {
+        $routeParams = [];
+        $queryParams = [
+            'filter' => [
+                UserSchema::ATTR_ALIAS => [
+                    'like' => '%,%',
+                ],
+            ],
+        ];
+        $container   = $this->createContainer();
+        $uri         = new Uri('http://localhost.local/users?' . http_build_query($queryParams));
+        /** @var Mock $request */
+        $request = Mockery::mock(ServerRequestInterface::class);
+        $request->shouldReceive('getQueryParams')->once()->withNoArgs()->andReturn($queryParams);
+        $request->shouldReceive('getUri')->once()->withNoArgs()->andReturn($uri);
+
+        $exception = null;
+        try {
+            /** @var ServerRequestInterface $request */
+            $response = ApiUsersController::index($routeParams, $container, $request);
+            $this->assertNotNull($response);
+            $this->assertEquals(200, $response->getStatusCode());
+
+            $body     = (string)($response->getBody());
+            $resource = json_decode($body, true);
+
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_DATA, $resource);
+
+            $this->assertCount(5, $resource[DocumentInterface::KEYWORD_DATA]);
+
+            $this->assertEquals(1, $data = $resource[DocumentInterface::KEYWORD_DATA][0]['id']);
+        } catch (JsonApiException $exception) {
+        }
+
+        $this->assertNull($exception);
+    }
+
+    /**
+     * Controller test.
+     *
+     * @throws Exception
+     * @throws DBALException
+     */
+    public function testIndexAttributeFilterWithSpecialCharactersValue2(): void
+    {
+        $routeParams = [];
+        $queryParams = [
+            'filter' => [
+                UserSchema::ATTR_ALIAS => [
+                    'eq' => '^SaS_B_U^P_R^D`IaI_X_Y_R`KaC`S)\';,^/{}|:<~]EAWGAAVUIW&\';,`/{}|:<>~]jZweIaDCDV',
+                ],
+            ],
+        ];
+        $container   = $this->createContainer();
+        $uri         = new Uri('http://localhost.local/users?' . http_build_query($queryParams));
+        /** @var Mock $request */
+        $request = Mockery::mock(ServerRequestInterface::class);
+        $request->shouldReceive('getQueryParams')->once()->withNoArgs()->andReturn($queryParams);
+        $request->shouldReceive('getUri')->once()->withNoArgs()->andReturn($uri);
+
+        $exception = null;
+        try {
+            /** @var ServerRequestInterface $request */
+            $response = ApiUsersController::index($routeParams, $container, $request);
+            $this->assertNotNull($response);
+            $this->assertEquals(200, $response->getStatusCode());
+
+            $body     = (string)($response->getBody());
+            $resource = json_decode($body, true);
+            var_dump($resource);
+
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_DATA, $resource);
+
+            $this->assertCount(1, $resource[DocumentInterface::KEYWORD_DATA]);
+
+            $this->assertEquals(3, $data = $resource[DocumentInterface::KEYWORD_DATA][0]['id']);
+        } catch (JsonApiException $exception) {
+        }
+
+        $this->assertNull($exception);
+    }
+
+    /**
+     * Controller test.
+     *
+     * @throws Exception
+     * @throws DBALException
+     */
     public function testIndexWithParametersJoinedByOR(): void
     {
         $routeParams = [];
