@@ -931,7 +931,7 @@ class ModelQueryBuilder extends QueryBuilder
     private function firstValue(iterable $arguments)
     {
         foreach ($arguments as $argument) {
-             return htmlspecialchars_decode($argument);
+             return is_string($argument) === true ? htmlspecialchars_decode($argument) : $argument;
         }
 
         // arguments are empty

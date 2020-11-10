@@ -1,4 +1,4 @@
-<?php declare (strict_types = 1);
+<?php declare (strict_types=1);
 
 namespace Limoncello\Tests\Flute\Api;
 
@@ -46,6 +46,8 @@ use Limoncello\Tests\Flute\Data\Models\Emotion;
 use Limoncello\Tests\Flute\Data\Models\Post;
 use Limoncello\Tests\Flute\Data\Models\StringPKModel;
 use Limoncello\Tests\Flute\Data\Models\User;
+use Limoncello\Tests\Flute\Data\Schemas\PostSchema;
+use Limoncello\Tests\Flute\Data\Schemas\UserSchema;
 use Limoncello\Tests\Flute\Data\Types\SystemDateTimeType;
 use Limoncello\Tests\Flute\TestCase;
 use PDO;
@@ -326,23 +328,29 @@ class CrudTest extends TestCase
 
         /** @var PaginatedDataInterface $emotions */
         $emotions = $comments[0]->{Comment::REL_EMOTIONS};
-        $this->assertCount(3, $emotions->getData());
-        $this->assertTrue($emotions->hasMoreItems());
+        $this->assertCount(2, $emotions->getData());
+        $this->assertFalse($emotions->hasMoreItems());
         $this->assertEquals(0, $emotions->getOffset());
         $this->assertEquals(self::DEFAULT_PAGE, $emotions->getLimit());
+        $this->assertEquals(2, $emotions->getData()[0]->{Emotion::FIELD_ID});
+        $this->assertEquals(3, $emotions->getData()[1]->{Emotion::FIELD_ID});
 
         $emotions = $comments[1]->{Comment::REL_EMOTIONS};
-        $this->assertCount(1, $emotions->getData());
+        $this->assertCount(2, $emotions->getData());
         $this->assertFalse($emotions->hasMoreItems());
         $this->assertSame(0, $emotions->getOffset());
         $this->assertSame(self::DEFAULT_PAGE, $emotions->getLimit());
+        $this->assertEquals(1, $emotions->getData()[0]->{Emotion::FIELD_ID});
+        $this->assertEquals(2, $emotions->getData()[1]->{Emotion::FIELD_ID});
 
         $comment  = $comments[2];
         $emotions = $comment->{Comment::REL_EMOTIONS};
-        $this->assertCount(1, $emotions->getData());
+        $this->assertCount(2, $emotions->getData());
         $this->assertFalse($emotions->hasMoreItems());
         $this->assertSame(0, $emotions->getOffset());
         $this->assertSame(self::DEFAULT_PAGE, $emotions->getLimit());
+        $this->assertEquals(3, $emotions->getData()[0]->{Emotion::FIELD_ID});
+        $this->assertEquals(5, $emotions->getData()[1]->{Emotion::FIELD_ID});
 
         $this->assertNotNull($post = $comment->{Comment::REL_POST});
         $this->assertNotNull($user = $post->{Post::REL_USER});
@@ -435,28 +443,42 @@ class CrudTest extends TestCase
         $this->assertCount(self::DEFAULT_PAGE, $comments);
         $this->assertEquals(0, $offset);
         $this->assertEquals(self::DEFAULT_PAGE, $limit);
+        $this->assertEquals(29, $comments[0]->{Comment::FIELD_ID});
+        $this->assertEquals(36, $comments[1]->{Comment::FIELD_ID});
         $this->assertTrue(is_string($comments[0]->{Comment::FIELD_CREATED_AT}));
+        $this->assertTrue(is_string($comments[1]->{Comment::FIELD_CREATED_AT}));
 
         /** @var PaginatedDataInterface $emotions */
         $emotions = $comments[0]->{Comment::REL_EMOTIONS};
-        $this->assertCount(3, $emotions->getData());
-        $this->assertTrue($emotions->hasMoreItems());
+        $this->assertCount(2, $emotions->getData());
+        $this->assertFalse($emotions->hasMoreItems());
         $this->assertEquals(0, $emotions->getOffset());
         $this->assertEquals(self::DEFAULT_PAGE, $emotions->getLimit());
+        $this->assertEquals(2, $emotions->getData()[0]->{Emotion::FIELD_ID});
+        $this->assertEquals(3, $emotions->getData()[1]->{Emotion::FIELD_ID});
         $this->assertTrue(is_string($emotions->getData()[0]->{Emotion::FIELD_CREATED_AT}));
+        $this->assertTrue(is_string($emotions->getData()[1]->{Emotion::FIELD_CREATED_AT}));
 
         $emotions = $comments[1]->{Comment::REL_EMOTIONS};
-        $this->assertCount(1, $emotions->getData());
+        $this->assertCount(2, $emotions->getData());
         $this->assertFalse($emotions->hasMoreItems());
         $this->assertSame(0, $emotions->getOffset());
         $this->assertSame(self::DEFAULT_PAGE, $emotions->getLimit());
+        $this->assertEquals(1, $emotions->getData()[0]->{Emotion::FIELD_ID});
+        $this->assertEquals(2, $emotions->getData()[1]->{Emotion::FIELD_ID});
+        $this->assertTrue(is_string($emotions->getData()[0]->{Emotion::FIELD_CREATED_AT}));
+        $this->assertTrue(is_string($emotions->getData()[1]->{Emotion::FIELD_CREATED_AT}));
 
         $comment  = $comments[2];
         $emotions = $comment->{Comment::REL_EMOTIONS};
-        $this->assertCount(1, $emotions->getData());
+        $this->assertCount(2, $emotions->getData());
         $this->assertFalse($emotions->hasMoreItems());
         $this->assertSame(0, $emotions->getOffset());
         $this->assertSame(self::DEFAULT_PAGE, $emotions->getLimit());
+        $this->assertEquals(3, $emotions->getData()[0]->{Emotion::FIELD_ID});
+        $this->assertEquals(5, $emotions->getData()[1]->{Emotion::FIELD_ID});
+        $this->assertTrue(is_string($emotions->getData()[0]->{Emotion::FIELD_CREATED_AT}));
+        $this->assertTrue(is_string($emotions->getData()[1]->{Emotion::FIELD_CREATED_AT}));
 
         $this->assertNotNull($post = $comment->{Comment::REL_POST});
         $this->assertNotNull($user = $post->{Post::REL_USER});
@@ -538,21 +560,18 @@ class CrudTest extends TestCase
         $this->assertNotEmpty($data->getData());
         $this->assertCount($pagingSize, $data->getData());
         $this->assertTrue(($firstPost = $data->getData()[0]) instanceof Post);
-        $this->assertEquals(20, $firstPost->{Post::FIELD_ID});
-        $this->assertEquals(9, $data->getData()[1]->{Post::FIELD_ID});
+        $this->assertEquals(12, $firstPost->{Post::FIELD_ID});
+        $this->assertEquals(1, $data->getData()[1]->{Post::FIELD_ID});
         $this->assertTrue($data->isCollection());
         $this->assertEquals($pagingOffset, $data->getOffset());
         $this->assertEquals($pagingSize, $data->getLimit());
 
         // make sure that `comments` and `comments -> emotions` are sorted.
-        $this->assertCount(3, $comments = $firstPost->{Post::REL_COMMENTS}->getData());
-        $this->assertEquals(27, $comments[0]->{Comment::FIELD_ID});
-        $this->assertEquals(39, $comments[1]->{Comment::FIELD_ID});
-        $this->assertEquals(49, $comments[2]->{Comment::FIELD_ID});
-        $this->assertCount(3, $emotions = $comments[1]->{Comment::REL_EMOTIONS}->getData());
-        $this->assertEquals(3, $emotions[0]->{Emotion::FIELD_ID});
-        $this->assertEquals(4, $emotions[1]->{Emotion::FIELD_ID});
-        $this->assertEquals(5, $emotions[2]->{Emotion::FIELD_ID});
+        $this->assertCount(2, $comments = $firstPost->{Post::REL_COMMENTS}->getData());
+        $this->assertEquals(26, $comments[0]->{Comment::FIELD_ID});
+        $this->assertEquals(59, $comments[1]->{Comment::FIELD_ID});
+        $this->assertCount(1, $emotions = $comments[1]->{Comment::REL_EMOTIONS}->getData());
+        $this->assertEquals(2, $emotions[0]->{Emotion::FIELD_ID});
     }
 
     /**
@@ -565,8 +584,8 @@ class CrudTest extends TestCase
     {
         $crud = $this->createCrud(UsersApi::class);
 
-        $filters        = [
-            User::FIELD_ALIAS   => [
+        $filters = [
+            User::FIELD_ALIAS => [
                 FilterParameterInterface::OPERATION_LIKE => ['%&%'],
             ],
         ];
@@ -588,12 +607,44 @@ class CrudTest extends TestCase
      * @throws Exception
      * @throws DBALException
      */
+    public function testIndexAttributeFilterWithSpecialCharactersValueAndIncludes(): void
+    {
+        $crud = $this->createCrud(UsersApi::class);
+
+        $filters = [
+            User::FIELD_ALIAS => [
+                FilterParameterInterface::OPERATION_LIKE => ['%&%'],
+            ],
+        ];
+
+        $includePaths = [
+            [User::REL_AUTHORED_POSTS],
+        ];
+
+        $data = $crud
+            ->withFilters($filters)
+            ->withIncludes($includePaths)
+            ->combineWithAnd()
+            ->index();
+
+        $this->assertNotEmpty($data->getData());
+        $this->assertCount(3, $data->getData());
+        $this->assertTrue(($firstUser = $data->getData()[0]) instanceof User);
+        $this->assertEquals(1, $firstUser->{User::FIELD_ID});
+    }
+
+    /**
+     * Test index.
+     *
+     * @throws Exception
+     * @throws DBALException
+     */
     public function testIndexAttributeFilterWithSpecialCharactersValue1(): void
     {
         $crud = $this->createCrud(UsersApi::class);
 
-        $filters        = [
-            User::FIELD_ALIAS   => [
+        $filters = [
+            User::FIELD_ALIAS => [
                 FilterParameterInterface::OPERATION_LIKE => ['%,%'],
             ],
         ];
@@ -619,8 +670,8 @@ class CrudTest extends TestCase
     {
         $crud = $this->createCrud(UsersApi::class);
 
-        $filters        = [
-            User::FIELD_ALIAS   => [
+        $filters = [
+            User::FIELD_ALIAS => [
                 FilterParameterInterface::OPERATION_EQUALS => ['^SaS_B_U^P_R^D`IaI_X_Y_R`KaC`S)\';,^/{}|:<~]EAWGAAVUIW&\';,`/{}|:<>~]jZweIaDCDV'],
             ],
         ];
@@ -682,7 +733,7 @@ class CrudTest extends TestCase
 
         $data = $crud->withFilters($filters)->withPaging($pagingOffset, $pagingSize)->index();
 
-        $this->assertCount(6, $data->getData());
+        $this->assertCount(10, $data->getData());
     }
 
     /**
@@ -705,7 +756,7 @@ class CrudTest extends TestCase
             ->withRelationshipFilters(Post::REL_USER, $filters)
             ->index();
 
-        $this->assertCount(6, $data->getData());
+        $this->assertCount(10, $data->getData());
     }
 
     /**
@@ -766,8 +817,8 @@ class CrudTest extends TestCase
 
         $this->assertNotEmpty($data->getData());
         $this->assertCount($pagingSize, $data->getData());
-        $this->assertEquals(9, $data->getData()[0]->{Comment::FIELD_ID});
-        $this->assertEquals(85, $data->getData()[1]->{Comment::FIELD_ID});
+        $this->assertEquals(2, $data->getData()[0]->{Comment::FIELD_ID});
+        $this->assertEquals(78, $data->getData()[1]->{Comment::FIELD_ID});
         $this->assertTrue($data->isCollection());
         $this->assertEquals($pagingOffset, $data->getOffset());
         $this->assertEquals($pagingSize, $data->getLimit());
@@ -808,9 +859,9 @@ class CrudTest extends TestCase
 
         $this->assertNotEmpty($comments = $data->getData());
         $this->assertCount(3, $comments);
-        $this->assertEquals(10, $data->getData()[0]->{Comment::FIELD_ID});
-        $this->assertEquals(83, $data->getData()[1]->{Comment::FIELD_ID});
-        $this->assertEquals(31, $data->getData()[2]->{Comment::FIELD_ID});
+        $this->assertEquals(3, $data->getData()[0]->{Comment::FIELD_ID});
+        $this->assertEquals(76, $data->getData()[1]->{Comment::FIELD_ID});
+        $this->assertEquals(24, $data->getData()[2]->{Comment::FIELD_ID});
         $this->assertTrue($data->isCollection());
     }
 
@@ -849,7 +900,7 @@ class CrudTest extends TestCase
             ->withPaging($pagingOffset, $pagingSize)
             ->indexRelationshipIdentities(Post::REL_COMMENTS, $commentFilters, $commentSorts);
 
-        $this->assertEquals([9, 85, 83], $data);
+        $this->assertEquals([2, 78, 76], $data);
     }
 
     /**
@@ -1089,7 +1140,7 @@ class CrudTest extends TestCase
 
         $result = $crud->withFilters($filters)->count();
 
-        $this->assertEquals(15, $result);
+        $this->assertEquals(17, $result);
     }
 
     /**
@@ -1110,7 +1161,7 @@ class CrudTest extends TestCase
 
         $result = $crud->withRelationshipFilters(Post::REL_USER, $filters)->count();
 
-        $this->assertEquals(4, $result);
+        $this->assertEquals(3, $result);
     }
 
     /**
@@ -1124,7 +1175,7 @@ class CrudTest extends TestCase
         $crud = $this->createCrud(PostsApi::class);
 
         $this->assertFalse($crud->hasInRelationship('1', Post::REL_COMMENTS, '1'));
-        $this->assertTrue($crud->hasInRelationship('1', Post::REL_COMMENTS, '9'));
+        $this->assertTrue($crud->hasInRelationship('1', Post::REL_COMMENTS, '2'));
     }
 
     /**

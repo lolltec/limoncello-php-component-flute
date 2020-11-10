@@ -1,4 +1,4 @@
-<?php declare (strict_types = 1);
+<?php declare (strict_types=1);
 
 namespace Limoncello\Tests\Flute\Data\Validation\JsonQueries;
 
@@ -20,6 +20,7 @@ namespace Limoncello\Tests\Flute\Data\Validation\JsonQueries;
 
 use Limoncello\Flute\Contracts\Validation\JsonApiQueryRulesInterface;
 use Limoncello\Flute\Validation\JsonApi\Rules\DefaultQueryValidationRules;
+use Limoncello\Tests\Flute\Data\Schemas\PostSchema;
 use Limoncello\Tests\Flute\Data\Schemas\UserSchema as Schema;
 use Limoncello\Tests\Flute\Data\Validation\AppRules as v;
 use Limoncello\Validation\Contracts\Rules\RuleInterface;
@@ -62,7 +63,12 @@ class ReadUsersQueryRules implements JsonApiQueryRulesInterface
      */
     public static function getSortsRule(): ?RuleInterface
     {
-        return v::fail();
+//        return v::fail();
+        return v::isString(v::inValues([
+            Schema::RESOURCE_ID,
+            Schema::REL_POSTS,
+            Schema::REL_POSTS . '.' . PostSchema::ATTR_TITLE,
+        ]));
     }
 
     /**

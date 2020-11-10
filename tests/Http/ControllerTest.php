@@ -1,4 +1,4 @@
-<?php declare (strict_types = 1);
+<?php declare (strict_types=1);
 
 namespace Limoncello\Tests\Flute\Http;
 
@@ -145,10 +145,10 @@ class ControllerTest extends TestCase
         $decoded = json_decode($body, true);
 
         $expectedMeta = [
-            'total_pages'    => 2,
+            'total_pages'    => 3,
             'current_page'   => 1,
             'items_per_page' => 10,
-            'total_items'    => 20,
+            'total_items'    => 21,
             'items_offset'   => 0,
         ];
 
@@ -217,13 +217,10 @@ class ControllerTest extends TestCase
 
         // check reply has resource included
         $this->assertCount(1, $resource[DocumentInterface::KEYWORD_INCLUDED]);
-        // manually checked it should be 4 rows selected
-        $this->assertCount(4, $resource[DocumentInterface::KEYWORD_DATA]);
+        // manually checked it should be 1 row selected
+        $this->assertCount(1, $resource[DocumentInterface::KEYWORD_DATA]);
         // check response sorted by post.id
-        $this->assertEquals(8, $resource['data'][0]['relationships'][CommentSchema::REL_POST]['data']['id']);
-        $this->assertEquals(11, $resource['data'][1]['relationships'][CommentSchema::REL_POST]['data']['id']);
-        $this->assertEquals(11, $resource['data'][2]['relationships'][CommentSchema::REL_POST]['data']['id']);
-        $this->assertEquals(15, $resource['data'][3]['relationships'][CommentSchema::REL_POST]['data']['id']);
+        $this->assertEquals(15, $resource['data'][0]['relationships'][CommentSchema::REL_POST]['data']['id']);
 
         // check some fields were filtered out
         $this->assertFalse(isset($resource['data'][0]['relationships'][CommentSchema::REL_EMOTIONS]));
@@ -231,7 +228,7 @@ class ControllerTest extends TestCase
         // check dynamic attribute is present in User
         $this->assertTrue(isset(
             $resource[DocumentInterface::KEYWORD_INCLUDED][0]
-                [DocumentInterface::KEYWORD_ATTRIBUTES][UserSchema::D_ATTR_FULL_NAME]
+            [DocumentInterface::KEYWORD_ATTRIBUTES][UserSchema::D_ATTR_FULL_NAME]
         ));
     }
 
@@ -298,7 +295,7 @@ class ControllerTest extends TestCase
         $routeParams = [];
         $queryParams = [
             'page' => [
-                'limit' => 2,
+                'limit'  => 2,
                 'offset' => 5,
             ],
         ];
@@ -346,7 +343,7 @@ class ControllerTest extends TestCase
     {
         $routeParams = [];
         $queryParams = [
-            'page' => [
+            'page'   => [
                 'limit' => 2
             ],
             'filter' => [
@@ -394,8 +391,8 @@ class ControllerTest extends TestCase
     {
         $routeParams = [];
         $queryParams = [
-            'page' => [
-                'limit' => 2,
+            'page'   => [
+                'limit'  => 2,
                 'offset' => 2,
             ],
             'filter' => [
@@ -454,16 +451,16 @@ class ControllerTest extends TestCase
     {
         $routeParams = [];
         $queryParams = [
-            'page' => [
-                'limit' => 2,
+            'page'    => [
+                'limit'  => 2,
                 'offset' => 2,
             ],
-            'filter' => [
+            'filter'  => [
                 'or' => [
                     BoardSchema::RESOURCE_ID => [
                         'in' => '1,2,3,4,5',
                     ],
-                    PostSchema::RESOURCE_ID   => [
+                    PostSchema::RESOURCE_ID  => [
                         'in' => '1,2,3,4,5,6,7,8'
                     ],
                 ]
@@ -548,9 +545,104 @@ class ControllerTest extends TestCase
 
             $this->assertArrayHasKey(DocumentInterface::KEYWORD_DATA, $resource);
 
-            $this->assertCount(5, $resource[DocumentInterface::KEYWORD_DATA]);
+            $this->assertCount(3, $resource[DocumentInterface::KEYWORD_DATA]);
 
             $this->assertEquals(1, $data = $resource[DocumentInterface::KEYWORD_DATA][0]['id']);
+        } catch (JsonApiException $exception) {
+        }
+
+        $this->assertNull($exception);
+    }
+
+    /**
+     * Controller test.
+     *
+     * @throws Exception
+     * @throws DBALException
+     */
+    public function testIndexAttributeFilterWithSpecialCharactersValueAndIncludes(): void
+    {
+        $routeParams = [];
+        $queryParams = [
+            'filter'  => [
+                UserSchema::ATTR_ALIAS => [
+                    'like' => '%&%',
+                ],
+            ],
+            'include' => UserSchema::REL_POSTS,
+        ];
+        $container   = $this->createContainer();
+        $uri         = new Uri('http://localhost.local/users?' . http_build_query($queryParams));
+        /** @var Mock $request */
+        $request = Mockery::mock(ServerRequestInterface::class);
+        $request->shouldReceive('getQueryParams')->once()->withNoArgs()->andReturn($queryParams);
+        $request->shouldReceive('getUri')->once()->withNoArgs()->andReturn($uri);
+
+        $exception = null;
+        try {
+            /** @var ServerRequestInterface $request */
+            $response = ApiUsersController::index($routeParams, $container, $request);
+            $this->assertNotNull($response);
+            $this->assertEquals(200, $response->getStatusCode());
+
+            $body     = (string)($response->getBody());
+            $resource = json_decode($body, true);
+
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_DATA, $resource);
+
+            $this->assertCount(3, $resource[DocumentInterface::KEYWORD_DATA]);
+
+            $this->assertEquals(1, $data = $resource[DocumentInterface::KEYWORD_DATA][0]['id']);
+            $this->assertEquals(2, $data = $resource[DocumentInterface::KEYWORD_DATA][1]['id']);
+            $this->assertEquals(3, $data = $resource[DocumentInterface::KEYWORD_DATA][2]['id']);
+        } catch (JsonApiException $exception) {
+        }
+
+        $this->assertNull($exception);
+    }
+
+    /**
+     * Controller test.
+     *
+     * @throws Exception
+     * @throws DBALException
+     */
+    public function testIndexAttributeFilterWithSpecialCharactersValueAndIncludesAndSorts(): void
+    {
+        $routeParams = [];
+        $queryParams = [
+            'filter'  => [
+                UserSchema::ATTR_ALIAS => [
+                    'like' => '%&%',
+                ],
+            ],
+            'include' => UserSchema::REL_POSTS,
+            'sort'    => UserSchema::RESOURCE_ID . ',' . UserSchema::REL_POSTS . '.' . PostSchema::ATTR_TITLE,
+        ];
+        $container   = $this->createContainer();
+        $uri         = new Uri('http://localhost.local/users?' . http_build_query($queryParams));
+        /** @var Mock $request */
+        $request = Mockery::mock(ServerRequestInterface::class);
+        $request->shouldReceive('getQueryParams')->once()->withNoArgs()->andReturn($queryParams);
+        $request->shouldReceive('getUri')->once()->withNoArgs()->andReturn($uri);
+
+        $exception = null;
+        try {
+            /** @var ServerRequestInterface $request */
+            $response = ApiUsersController::index($routeParams, $container, $request);
+            $this->assertNotNull($response);
+            $this->assertEquals(200, $response->getStatusCode());
+
+            $body     = (string)($response->getBody());
+            $resource = json_decode($body, true);
+
+            $this->assertArrayHasKey(DocumentInterface::KEYWORD_DATA, $resource);
+
+            $this->assertCount(3, $resource[DocumentInterface::KEYWORD_DATA]);
+
+            $this->assertEquals(1, $data = $resource[DocumentInterface::KEYWORD_DATA][0]['id']);
+            $this->assertEquals(2, $data = $resource[DocumentInterface::KEYWORD_DATA][1]['id']);
+            $this->assertEquals(3, $data = $resource[DocumentInterface::KEYWORD_DATA][2]['id']);
         } catch (JsonApiException $exception) {
         }
 
@@ -633,7 +725,6 @@ class ControllerTest extends TestCase
 
             $body     = (string)($response->getBody());
             $resource = json_decode($body, true);
-            var_dump($resource);
 
             $this->assertArrayHasKey(DocumentInterface::KEYWORD_DATA, $resource);
 
@@ -686,14 +777,14 @@ class ControllerTest extends TestCase
 
         // manually checked it should be 8 rows selected
         $this->assertCount(8, $resource[DocumentInterface::KEYWORD_DATA]);
-        $this->assertEquals(10, $resource['data'][0]['id']);
-        $this->assertEquals(11, $resource['data'][1]['id']);
-        $this->assertEquals(33, $resource['data'][2]['id']);
-        $this->assertEquals(44, $resource['data'][3]['id']);
-        $this->assertEquals(48, $resource['data'][4]['id']);
-        $this->assertEquals(66, $resource['data'][5]['id']);
-        $this->assertEquals(77, $resource['data'][6]['id']);
-        $this->assertEquals(81, $resource['data'][7]['id']);
+        $this->assertEquals(4, $resource['data'][0]['id']);
+        $this->assertEquals(10, $resource['data'][1]['id']);
+        $this->assertEquals(26, $resource['data'][2]['id']);
+        $this->assertEquals(37, $resource['data'][3]['id']);
+        $this->assertEquals(41, $resource['data'][4]['id']);
+        $this->assertEquals(59, $resource['data'][5]['id']);
+        $this->assertEquals(70, $resource['data'][6]['id']);
+        $this->assertEquals(74, $resource['data'][7]['id']);
     }
 
     /**
@@ -891,7 +982,7 @@ class ControllerTest extends TestCase
         $resource = json_decode($body, true);
 
         $this->assertNotEmpty($resource);
-        $this->assertEquals(5, $resource['data']['id']);
+        $this->assertEquals(4, $resource['data']['id']);
     }
 
     /**
@@ -931,13 +1022,12 @@ class ControllerTest extends TestCase
         $body     = (string)($response->getBody());
         $resource = json_decode($body, true);
 
-        // manually checked it should be 2 rows
+        // manually checked it should be 1 row
         // - comments with ID from 1 to 10 have user IDs 2, 4, 5
         // - posts with ID from 1 to 7 have user IDs 3, 4, 5
         // - therefore output must have 2 users with IDs 4 and 5
-        $this->assertCount(2, $resource[DocumentInterface::KEYWORD_DATA]);
+        $this->assertCount(1, $resource[DocumentInterface::KEYWORD_DATA]);
         $this->assertEquals(4, $resource['data'][0]['id']);
-        $this->assertEquals(5, $resource['data'][1]['id']);
     }
 
     /**
@@ -949,14 +1039,14 @@ class ControllerTest extends TestCase
     public function testIndexWithBelongsToManyFilter(): void
     {
         $routeParams = [];
-        // comments with ID 2 and 4 have more than 1 emotions. We will check that only distinct rows to be returned.
+        // comments with ID between 1 and 8 have more than 1 emotions. We will check that only distinct rows to be returned.
         $queryParams = [
             'filter' => [
                 CommentSchema::RESOURCE_ID  => [
-                    'in' => '2,3,4',
+                    'in' => '1,2,3,4,5,6,7,8',
                 ],
                 CommentSchema::REL_EMOTIONS => [
-                    'in' => '2,3,4',
+                    'in' => '1,2,3,4,6,7,8',
                 ],
             ],
         ];
@@ -983,11 +1073,15 @@ class ControllerTest extends TestCase
         $body     = (string)($response->getBody());
         $resource = json_decode($body, true);
 
-        // manually checked if rows are not distinct it would be 6 rows
-        $this->assertCount(3, $resource[DocumentInterface::KEYWORD_DATA]);
-        $this->assertEquals(2, $resource['data'][0]['id']);
+        // manually checked if rows are not distinct it would be 7 rows
+        $this->assertCount(7, $resource[DocumentInterface::KEYWORD_DATA]);
+        $this->assertEquals(1, $resource['data'][0]['id']);
         $this->assertEquals(3, $resource['data'][1]['id']);
         $this->assertEquals(4, $resource['data'][2]['id']);
+        $this->assertEquals(5, $resource['data'][3]['id']);
+        $this->assertEquals(6, $resource['data'][4]['id']);
+        $this->assertEquals(7, $resource['data'][5]['id']);
+        $this->assertEquals(8, $resource['data'][6]['id']);
     }
 
     /**
@@ -1149,7 +1243,7 @@ EOT;
         $this->assertEquals('10', $resource['id']);
         $this->assertEquals([
             'user-relationship'     => ['data' => ['type' => 'users', 'id' => '1']],
-            'post-relationship'     => ['data' => ['type' => 'posts', 'id' => '1']],
+            'post-relationship'     => ['data' => ['type' => 'posts', 'id' => '15']],
             'emotions-relationship' => ['links' => ['self' => '/comments/10/relationships/emotions-relationship']],
         ], $resource['relationships']);
     }
@@ -1507,12 +1601,9 @@ EOT;
         $body     = (string)($response->getBody());
         $resource = json_decode($body, true);
 
-        $this->assertCount(4, $resource[DocumentInterface::KEYWORD_DATA]);
+        $this->assertCount(1, $resource[DocumentInterface::KEYWORD_DATA]);
         // manually checked that emotions should have these ids and sorted by name in ascending order.
-        $this->assertEquals('2', $resource['data'][0]['id']);
-        $this->assertEquals('3', $resource['data'][1]['id']);
-        $this->assertEquals('4', $resource['data'][2]['id']);
-        $this->assertEquals('5', $resource['data'][3]['id']);
+        $this->assertEquals('5', $resource['data'][0]['id']);
     }
 
     /**
@@ -1546,18 +1637,12 @@ EOT;
         $body     = (string)($response->getBody());
         $resource = json_decode($body, true);
 
-        $this->assertCount(4, $resource[DocumentInterface::KEYWORD_DATA]);
+        $this->assertCount(1, $resource[DocumentInterface::KEYWORD_DATA]);
         // manually checked that emotions should have these ids and sorted by name in ascending order.
-        $this->assertEquals('2', $resource['data'][0]['id']);
-        $this->assertEquals('3', $resource['data'][1]['id']);
-        $this->assertEquals('4', $resource['data'][2]['id']);
-        $this->assertEquals('5', $resource['data'][3]['id']);
+        $this->assertEquals('5', $resource['data'][0]['id']);
 
         // check we have only IDs in response (no attributes)
         $this->assertArrayNotHasKey(DocumentInterface::KEYWORD_ATTRIBUTES, $resource['data'][0]);
-        $this->assertArrayNotHasKey(DocumentInterface::KEYWORD_ATTRIBUTES, $resource['data'][1]);
-        $this->assertArrayNotHasKey(DocumentInterface::KEYWORD_ATTRIBUTES, $resource['data'][2]);
-        $this->assertArrayNotHasKey(DocumentInterface::KEYWORD_ATTRIBUTES, $resource['data'][3]);
     }
 
     /**
@@ -1693,7 +1778,7 @@ EOT;
         $connection = $container->get(Connection::class);
 
         $commentId = 1;
-        $emotionId = 4;
+        $emotionId = 1;
         // check the item is in the database
         $this->assertNotEmpty($connection->executeQuery(
             "SELECT * FROM $intTable WHERE $intCommentFk = $commentId AND $intEmotionFk = $emotionId"
@@ -1878,9 +1963,8 @@ EOT;
         $resource = json_decode($body, true);
 
         $this->assertCount(1, $resource[DocumentInterface::KEYWORD_DATA]);
-        // manually checked that only 1 comment (ID=17) of current user has post (ID=15) text with $seldomWord
-        $this->assertEquals('17', $resource['data'][0]['id']);
-        $this->assertContains('15', $resource['data'][0]['relationships'][CommentSchema::REL_POST]['data']['id']);
+        // manually checked that only 1 comment (ID=10) of current user has post text with $seldomWord
+        $this->assertEquals('10', $resource['data'][0]['id']);
     }
 
     /**
@@ -1916,14 +2000,17 @@ EOT;
         $resource = json_decode($body, true);
 
         // manually checked it should be 7 comments with IDs below
-        $this->assertCount(7, $resource[DocumentInterface::KEYWORD_DATA]);
-        $this->assertEquals('15', $resource['data'][0]['id']);
-        $this->assertEquals('17', $resource['data'][1]['id']);
-        $this->assertEquals('33', $resource['data'][2]['id']);
-        $this->assertEquals('51', $resource['data'][3]['id']);
-        $this->assertEquals('65', $resource['data'][4]['id']);
-        $this->assertEquals('66', $resource['data'][5]['id']);
-        $this->assertEquals('77', $resource['data'][6]['id']);
+        $this->assertCount(10, $resource[DocumentInterface::KEYWORD_DATA]);
+        $this->assertEquals('4', $resource['data'][0]['id']);
+        $this->assertEquals('8', $resource['data'][1]['id']);
+        $this->assertEquals('20', $resource['data'][2]['id']);
+        $this->assertEquals('37', $resource['data'][3]['id']);
+        $this->assertEquals('39', $resource['data'][4]['id']);
+        $this->assertEquals('41', $resource['data'][5]['id']);
+        $this->assertEquals('44', $resource['data'][6]['id']);
+        $this->assertEquals('58', $resource['data'][7]['id']);
+        $this->assertEquals('66', $resource['data'][8]['id']);
+        $this->assertEquals('70', $resource['data'][9]['id']);
     }
 
     /**
@@ -1949,13 +2036,13 @@ EOT;
         $container[Connection::class]                              = $connection = $this->initDb();
         $container[RelationshipPaginationStrategyInterface::class] = new BasicRelationshipPaginationStrategy(10);
 
-        $appConfig                                        = [
+        $appConfig = [
             ApplicationConfigurationInterface::KEY_ROUTES_FOLDER          =>
                 implode(DIRECTORY_SEPARATOR, [__DIR__, '..', 'Data', 'Http']),
             ApplicationConfigurationInterface::KEY_WEB_CONTROLLERS_FOLDER =>
                 implode(DIRECTORY_SEPARATOR, [__DIR__, '..', 'Data', 'Http']),
         ];
-        [$modelToSchemaMap]                               = $this->getSchemaMap();
+        [$modelToSchemaMap] = $this->getSchemaMap();
         $cacheSettingsProvider                            = new CacheSettingsProvider(
             $appConfig,
             [
@@ -1982,9 +2069,9 @@ EOT;
                 $urlPrefix = (string)$settings[FluteSettings::KEY_URI_PREFIX];
                 $encoder   = $factory
                     ->createEncoder($jsonSchemas)
-                ->withEncodeOptions($settings[FluteSettings::KEY_JSON_ENCODE_OPTIONS])
-                ->withEncodeDepth($settings[FluteSettings::KEY_JSON_ENCODE_DEPTH])
-                ->withUrlPrefix($urlPrefix);
+                    ->withEncodeOptions($settings[FluteSettings::KEY_JSON_ENCODE_OPTIONS])
+                    ->withEncodeDepth($settings[FluteSettings::KEY_JSON_ENCODE_DEPTH])
+                    ->withUrlPrefix($urlPrefix);
                 if (isset($settings[FluteSettings::KEY_META]) === true) {
                     $meta = $settings[FluteSettings::KEY_META];
                     $encoder->withMeta($meta);
