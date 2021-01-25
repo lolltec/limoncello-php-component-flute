@@ -988,6 +988,8 @@ class ModelQueryBuilder extends QueryBuilder
             $type = PDO::PARAM_BOOL;
         } elseif ($value instanceof DateTimeInterface) {
             $type = PDO::PARAM_STR;
+        } else if (is_float($value) === true) {
+            $type = PDO::PARAM_STR;
         } else {
             assert(
                 $value !== null,
